@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """
 Fabric script that distributes an archive to your web servers
 """
@@ -6,8 +6,7 @@ Fabric script that distributes an archive to your web servers
 from fabric.api import env, put, run
 from os.path import exists
 
-
-env.hosts = ['<IP web-01>', '<IP web-02>']
+env.hosts = ['18.209.224.134', '35.168.7.197']
 env.user = 'ubuntu'
 
 
@@ -20,18 +19,19 @@ def do_deploy(archive_path):
 
     try:
         # Upload the archive to /tmp/ directory of the web server
-        put(archive_path, "/tmp/")
-
-        # Extract the archive to /data/web_static/releases/<archive filename without extension>
         filename = archive_path.split('/')[-1]
         folder_name = "/data/web_static/releases/" + filename.split('.')[0]
+
+        put(archive_path, "/tmp/{}".format(filename))
+
+        # Extract the archive to /data/web_static/releases/<filename>
         run("mkdir -p {}".format(folder_name))
         run("tar -xzf /tmp/{} -C {}".format(filename, folder_name))
 
         # Delete the archive from the web server
         run("rm /tmp/{}".format(filename))
 
-        # Move contents of extracted folder to parent folder and remove the extracted folder
+        # Move contents to parent folder and remove the extracted folder
         run("mv {}/web_static/* {}".format(folder_name, folder_name))
         run("rm -rf {}/web_static".format(folder_name))
 
@@ -47,8 +47,3 @@ def do_deploy(archive_path):
     except Exception as e:
         print(e)
         return False
-
-
-if __name__ == "__main__":
-    do_deploy(archive_path='versions/web_static_20170315003959.tgz')
-
