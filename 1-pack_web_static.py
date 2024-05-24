@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """
 Fabric script that generates a .tgz archive from the contents of the web_static
 folder of your AirBnB Clone repo
@@ -27,8 +27,3 @@ def do_pack():
         return None
     else:
         return file_name
-
-
-if __name__ == "__main__":
-    do_pack()
-
