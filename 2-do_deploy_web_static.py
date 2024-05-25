@@ -5,6 +5,7 @@ Fabric script that distributes an archive to your web servers
 
 from fabric.api import env, put, run
 from os.path import exists
+import os
 
 env.hosts = ['18.209.224.134', '35.168.7.197']
 env.user = 'ubuntu'
@@ -22,7 +23,7 @@ def do_deploy(archive_path):
         filename = archive_path.split('/')[-1]
         folder_name = "/data/web_static/releases/" + filename.split('.')[0]
 
-        put(archive_path, "/tmp/{}".format(filename))
+        put(archive_path, "/tmp/")
 
         # Extract the archive to /data/web_static/releases/<filename>
         run("mkdir -p {}".format(folder_name))
