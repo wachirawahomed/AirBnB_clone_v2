@@ -1,16 +1,13 @@
-
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """
 Fabric script that creates and distributes an archive to your web servers
 """
 
-from fabric.api import env, local, run
-from datetime import datetime
+from fabric.api import env, put, run, local
 from os.path import exists
-from os import makedirs
-from fabric.operations import put
+from datetime import datetime
 
-env.hosts = ['<IP web-01>', '<IP web-02>']
+env.hosts = ['18.209.224.134', '35.168.7.197']
 env.user = 'ubuntu'
 
 
@@ -18,21 +15,15 @@ def do_pack():
     """
     Generates a .tgz archive from the contents of the web_static folder
     """
-    # Create the versions folder if it doesn't exist
-    makedirs("versions", exist_ok=True)
-
-    # Generate the filename with current timestamp
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    file_name = "versions/web_static_" + timestamp + ".tgz"
-
-    # Create the .tgz archive
-    result = local("tar -czvf {} web_static".format(file_name))
-
-    # Check if the archive has been correctly generated
-    if result.failed:
+    try:
+        local("mkdir -p versions")
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        archive_path = "versions/web_static_{}.tgz".format(timestamp)
+        local("tar -cvzf {} web_static".format(archive_path))
+        return archive_path
+    except Exception as e:
+        print(e)
         return None
-    else:
-        return file_name
 
 
 def do_deploy(archive_path):
@@ -44,18 +35,18 @@ def do_deploy(archive_path):
 
     try:
         # Upload the archive to /tmp/ directory of the web server
-        put(archive_path, "/tmp/")
-
-        # Extract the archive to /data/web_static/releases/<archive filename without extension>
         filename = archive_path.split('/')[-1]
         folder_name = "/data/web_static/releases/" + filename.split('.')[0]
+        put(archive_path, "/tmp/")
+
+        # Extract the archive to /data/web_static/releases/<filename>
         run("mkdir -p {}".format(folder_name))
         run("tar -xzf /tmp/{} -C {}".format(filename, folder_name))
 
         # Delete the archive from the web server
         run("rm /tmp/{}".format(filename))
 
-        # Move contents of extracted folder to parent folder and remove the extracted folder
+        # Move contents to parent folder and remove the extracted folder
         run("mv {}/web_static/* {}".format(folder_name, folder_name))
         run("rm -rf {}/web_static".format(folder_name))
 
@@ -75,15 +66,10 @@ def do_deploy(archive_path):
 
 def deploy():
     """
-    Creates and distributes an archive to your web servers
+    Creates and distributes an archive to the web servers
     """
     archive_path = do_pack()
-    if not archive_path:
+    if archive_path is None:
         return False
 
     return do_deploy(archive_path)
-
-
-if __name__ == "__main__":
-    deploy()
-
