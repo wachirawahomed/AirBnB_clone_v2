@@ -7,6 +7,7 @@ from fabric.api import env, put, run
 from os.path import exists
 import os
 
+# Set the hosts and user
 env.hosts = ['18.209.224.134', '35.168.7.197']
 env.user = 'ubuntu'
 
@@ -19,20 +20,24 @@ def do_deploy(archive_path):
         return False
 
     try:
-        # Upload the archive to /tmp/ directory of the web server
+        # Extract filename and folder name from the archive_path
         filename = archive_path.split('/')[-1]
-        folder_name = "/data/web_static/releases/" + filename.split('.')[0]
+        no_ext = filename.split(".")[0]
+        folder_name = "/data/web_static/releases/{}/".format(no_ext)
 
+        # Upload the archive to /tmp/ directory of the web server
         put(archive_path, "/tmp/")
 
-        # Extract the archive to /data/web_static/releases/<filename>
+        # Create the folder where the archive will be uncompressed
         run("mkdir -p {}".format(folder_name))
+
+        # Uncompress the archive to the folder
         run("tar -xzf /tmp/{} -C {}".format(filename, folder_name))
 
         # Delete the archive from the web server
         run("rm /tmp/{}".format(filename))
 
-        # Move contents to parent folder and remove the extracted folder
+        # Move contents to parent folder and remove the web_static sub-folder
         run("mv {}/web_static/* {}".format(folder_name, folder_name))
         run("rm -rf {}/web_static".format(folder_name))
 
@@ -46,5 +51,5 @@ def do_deploy(archive_path):
         return True
 
     except Exception as e:
-        print(e)
+        print("Deployment failed: {}".format(e))
         return False
