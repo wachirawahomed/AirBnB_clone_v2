@@ -23,8 +23,8 @@ class State(BaseModel, Base):
         linked to the current State
         """
         city_objs = []
-        if storage.all(City):
-            for city in storage.all(City).values():
-                if city.state_id == self.id:
-                    city_objs.append(city)
+        all_cities = storage.all(City)
+        for city in all_cities.values():
+            if city.state_id == self.id:
+                city_objs.append(city)
         return city_objs
